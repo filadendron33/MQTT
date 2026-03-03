@@ -14,40 +14,8 @@ bool emptyMessage;
 
 
 wifiSetup wifi;
-MQTTClient mqtt(wifi.espClient);
-// PubSubClient mqtt_client(wifi.espClient);
+MQTTClient mqtt(wifi.espClient,"10.116.207.225");
 MyClient mojClient;
-
-
-
-//MQTT Code
-// void setup_wifi()
-// {
-//   delay(10);
-
-//   Serial.println();
-//   Serial.println("Connecting to");
-//   Serial.println(WifiName);
-
-
-//   WiFi.mode(WIFI_STA);
-//   WiFi.begin(WifiName,password);
-
-//   while(WiFi.status() != WL_CONNECTED)
-//   {
-//     delay(500);
-//     Serial.print(".");
-//   }
-
-//   Serial.println("");
-//   Serial.println("WiFi Connetcted");
-//   Serial.println("IP Address:");
-//   Serial.println(WiFi.localIP());
-
-// }
-
-
-
 
 
 
@@ -83,11 +51,11 @@ void loop() {
 
 
 if (mojClient.dataRecieved){
-  if(!mqtt_client.connected())
+  if(!mqtt.mqtt_client.connected())
   {
       connectToMqtt(mojClient.message);
    }
-  mqtt_client.loop();
+  mqtt.mqtt_client.loop();
 }
   
 }
