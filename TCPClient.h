@@ -1,3 +1,7 @@
+#ifndef _TCL_CLIENT_H_
+#define _TCL_CLIENT_H_
+
+
 #include <stdint.h>
 #include "IPAddress.h"
 #include <AsyncTCP.h>
@@ -47,6 +51,8 @@ class MyClient {
 
 };
 
+
+#endif
 
 
 

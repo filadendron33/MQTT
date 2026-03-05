@@ -1,18 +1,18 @@
 #include "WifiConfig.h"
-#incldue <Arduino.h>
+#include <Arduino.h>
 
 
-wifiSetup::wifiSetup(){
-    WifiName = nullptr;
-    password = nullptr;
+WifiConfig::WifiConfig(){
+    WifiName = "";
+    password = "";
 }
 
-wifiSetup::~wifiSetup(){
+WifiConfig::~WifiConfig(){
 
 }
 
 
-void wifiSetup::start_connect()
+void WifiConfig::start_connect()
 {
     delay(10);
 
@@ -37,7 +37,7 @@ void wifiSetup::start_connect()
 }
 
 
-wifiSetup::set_wifi_credentials(const char* ssid, const char* pass)
+void WifiConfig::set_wifi_credentials(const char* ssid, const char* pass)
 {   
     WifiName = ssid;
     password = pass;

@@ -1,13 +1,15 @@
-#include WiFi.h
+#ifndef _WIFI_CONFIG_H_
+#define _WIFI_CONFIG_H_
+#include <WiFi.h>
 
 
 
-class wifiSetup{
+class WifiConfig{
 
 
     public:
-        wifiSetup();
-        ~wifiSetup();
+        WifiConfig();
+        ~WifiConfig();
         WiFiClient espClient;
         void start_connect();
         void set_wifi_credentials(const char* ssid, const char* pass);
@@ -19,3 +21,5 @@ class wifiSetup{
         const char* password;
 
 };
+
+#endif

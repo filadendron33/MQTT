@@ -3,9 +3,6 @@
 
 MQTTClient::MQTTClient(WiFiClient& wifi, const char* serverIP) : mqtt_client(wifi), mqtt_server(serverIP){
 
-  mqtt_client.setServer(mqtt_server, 1884);
-  mqtt_client.setCallback(this->callback);
-
 }
 
 MQTTClient::~MQTTClient(){
@@ -69,4 +66,10 @@ void MQTTClient::connectToMqtt(String value){
     }
   }
 
+}
+
+
+void MQTTClient::mqttSetup(){
+    mqtt_client.setServer(mqtt_server,1884);
+    mqtt_client.setCallback(callback);
 }

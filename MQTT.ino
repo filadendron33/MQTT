@@ -1,8 +1,7 @@
-#include <WifiConfig.h>
-#include <MQTTClient.h>
-#include <PubSubClient.h>
+#include "WifiConfig.h"
+#include "MQTTClient.h"
 #include <Arduino.h>
-#include <TCPClient.h>
+#include "TCPClient.h"
 
 
 
@@ -13,7 +12,7 @@ bool emptyMessage;
 
 
 
-wifiSetup wifi;
+WifiConfig wifi;
 MQTTClient mqtt(wifi.espClient,"10.116.207.225");
 MyClient mojClient;
 
@@ -53,7 +52,7 @@ void loop() {
 if (mojClient.dataRecieved){
   if(!mqtt.mqtt_client.connected())
   {
-      connectToMqtt(mojClient.message);
+      mqtt.connectToMqtt(mojClient.message);
    }
   mqtt.mqtt_client.loop();
 }
