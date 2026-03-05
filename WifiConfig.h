@@ -13,6 +13,7 @@ class WifiConfig{
         WiFiClient espClient;
         void start_connect();
         void set_wifi_credentials(const char* ssid, const char* pass);
+        bool connected;
 
 
 
