@@ -7,8 +7,8 @@ MyClient::MyClient()
   hasAClient = false;
   connecting = false;
   recv = nullptr;
-   sent = false;
-   dataRecieved = false;
+  sent = false;
+  dataRecieved = false;
 
   connectStart = 0;
 }
@@ -40,7 +40,7 @@ Serial.println("Starting Ethernet...");
       Serial.println("Waiting for ethernet link");
       while(!ETH.linkUp() && (millis()-waitTime < 10000))
       {
-        Serial.println(".");
+        Serial.print(".");
         delay(200);
       }
 

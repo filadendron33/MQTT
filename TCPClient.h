@@ -12,11 +12,19 @@
 
 class MyClient {
 
+
+  
   public:
   MyClient();
   ~MyClient();
   uint8_t* recv;
   bool dataRecieved;
+  enum{
+    writing = 0,
+    reading = 1
+  }ClientState;
+  
+
  
 
 

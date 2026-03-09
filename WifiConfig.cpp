@@ -5,6 +5,7 @@
 WifiConfig::WifiConfig(){
     WifiName = "";
     password = "";
+    connected = false;
 }
 
 WifiConfig::~WifiConfig(){
@@ -34,6 +35,7 @@ void WifiConfig::start_connect()
     Serial.println("WiFi Connetcted");
     Serial.println("IP Address:");
     Serial.println(WiFi.localIP());
+    connected = true;
 }
 
 

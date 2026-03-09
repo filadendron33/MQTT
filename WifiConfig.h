@@ -1,3 +1,4 @@
+#include "IPAddress.h"
 #ifndef _WIFI_CONFIG_H_
 #define _WIFI_CONFIG_H_
 #include <WiFi.h>

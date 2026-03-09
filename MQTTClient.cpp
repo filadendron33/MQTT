@@ -1,8 +1,8 @@
 #include "MQTTClient.h"
 
 
-MQTTClient::MQTTClient(WiFiClient& wifi, const char* serverIP) : mqtt_client(wifi), mqtt_server(serverIP){
-
+MQTTClient::MQTTClient(WiFiClient& wifi, const char* serverIP) : mqtt_server(serverIP), mqtt_client(wifi){
+  
 }
 
 MQTTClient::~MQTTClient(){
@@ -31,7 +31,7 @@ void MQTTClient::connectToMqtt(String value){
   {
      
     String clientID = "MQTTClient - ";
-    clientID += String(random(0,100));
+    clientID += String(1);
 
     Serial.println("Trying to connect to MQTT Server with " + clientID);
 
@@ -70,6 +70,7 @@ void MQTTClient::connectToMqtt(String value){
 
 
 void MQTTClient::mqttSetup(){
+  
     mqtt_client.setServer(mqtt_server,1884);
     mqtt_client.setCallback(callback);
 }

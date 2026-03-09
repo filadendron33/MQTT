@@ -13,7 +13,7 @@ bool emptyMessage;
 
 
 WifiConfig wifi;
-MQTTClient mqtt(wifi.espClient,"10.116.207.225");
+MQTTClient mqtt(wifi.espClient,"192.168.1.21");
 MyClient mojClient;
 
 
@@ -28,9 +28,17 @@ void setup() {
   
   
 
-  wifi.set_wifi_credentials("ArduinoAP532C5", "12345678");
+  wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
+
+  // wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
 
   wifi.start_connect();
+
+ if (wifi.connected) {
+    Serial.println("MQTT setup:");
+    mqtt.mqttSetup();
+ }
+  
 
 
   mojClient.setup_ethernet();
