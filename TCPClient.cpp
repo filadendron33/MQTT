@@ -1,7 +1,7 @@
 #include "TCPClient.h"
 
 
-MyClient::MyClient()
+TCPClientClass::TCPClientClass()
 {
   client = nullptr;
   hasAClient = false;
@@ -13,7 +13,7 @@ MyClient::MyClient()
   connectStart = 0;
 }
 
-MyClient::~MyClient()
+TCPClientClass::~TCPClientClass()
 {
   if(client)
   {
@@ -23,7 +23,7 @@ MyClient::~MyClient()
 }
 
 
-void MyClient::setup_ethernet()
+void TCPClientClass::setup_ethernet()
 {
 Serial.println("Starting Ethernet...");
 
@@ -57,25 +57,25 @@ Serial.println("Starting Ethernet...");
 
 }
 
-void MyClient::onConnect(void* arg, AsyncClient* c)
+void TCPClientClass::onConnect(void* arg, AsyncClient* c)
 {
   Serial.println("TCP CONNECTED");
 }
 
-void MyClient::onDisconnect(void* arg, AsyncClient* c)
+void TCPClientClass::onDisconnect(void* arg, AsyncClient* c)
 {
   Serial.println("TCP DISCONNECTED");
 }
 
-void MyClient::onError(void* arg, AsyncClient* c, int8_t error)
+void TCPClientClass::onError(void* arg, AsyncClient* c, int8_t error)
 {
   Serial.printf("TCP ERROR: %d\n", error);
 
 }
 
-void MyClient::onData(void* arg, AsyncClient* c, void* data, size_t len)
+void TCPClientClass::onData(void* arg, AsyncClient* c, void* data, size_t len)
 {
-    MyClient* self = static_cast<MyClient*>(arg);
+    TCPClientClass* self = static_cast<TCPClientClass*>(arg);
 
     self->dataRecieved = false;
 
@@ -100,7 +100,7 @@ void MyClient::onData(void* arg, AsyncClient* c, void* data, size_t len)
 
 
 
-void MyClient::connectToServer()
+void TCPClientClass::connectToServer()
 {
 
     Serial.println("Connnecting to Server");
@@ -139,7 +139,7 @@ void MyClient::connectToServer()
 
 }
 
-void MyClient::sendToServer()
+void TCPClientClass::sendToServer()
 {
   if (client->connected())
   {
@@ -159,13 +159,13 @@ void MyClient::sendToServer()
 
 
 
-uint8_t* MyClient::getRecv(){
+uint8_t* TCPClientClass::getRecv(){
 
   return recv;
 }
 
 
-void MyClient::serverLoop()
+void TCPClientClass::serverLoop()
 {
   // if (client->disconnected() && !client->connecting())
   // {

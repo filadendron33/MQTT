@@ -13,8 +13,9 @@ bool emptyMessage;
 
 
 WifiConfig wifi;
-MQTTClient mqtt(wifi.espClient,"192.168.1.21");
-MyClient mojClient;
+PubSubClient mqtt_client(wifi.espClient);
+MQTTClient mqtt(mqtt_client,"10.93.225.225");
+TCPClientClass TCPClient;
 
 
 
@@ -28,21 +29,22 @@ void setup() {
   
   
 
-  wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
+  // wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
 
-  // wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
+  wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
 
   wifi.start_connect();
 
- if (wifi.connected) {
-    Serial.println("MQTT setup:");
-    mqtt.mqttSetup();
- }
-  
+ 
 
 
-  mojClient.setup_ethernet();
-  mojClient.connectToServer();
+
+  // TCPClient.setup_ethernet();
+  // TCPClient.connectToServer();
+
+
+  mqtt_client.setServer(mqtt.mqtt_server,1884);
+  mqtt_client.setCallback(mqtt.callback);
 
   // mqtt_client.setServer(mqtt_server, 1884);
   // mqtt_client.setCallback(callback);
@@ -53,16 +55,8 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  mojClient.serverLoop();
+  //mojClient.serverLoop();
 
-
-
-if (mojClient.dataRecieved){
-  if(!mqtt.mqtt_client.connected())
-  {
-      mqtt.connectToMqtt(mojClient.message);
-   }
-  mqtt.mqtt_client.loop();
-}
+  mqtt.connectToMqtt("123");
   
 }

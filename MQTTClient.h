@@ -11,14 +11,15 @@
 
 class MQTTClient{
     public:
-        MQTTClient(WiFiClient& wifi, const char* serverIP);
+        MQTTClient(PubSubClient& client, const char* serverIP);
         ~MQTTClient();
         void connectToMqtt(String value);
         static void callback (char* topic , byte* payload, unsigned int lenght);
         void mqttSetup();
-        PubSubClient mqtt_client;
-    private:
+        PubSubClient* pMqtt_client;
         const char* mqtt_server;
+    private:
+        
 
 };
 

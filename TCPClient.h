@@ -10,13 +10,13 @@
 
 
 
-class MyClient {
+class TCPClientClass {
 
 
   
   public:
-  MyClient();
-  ~MyClient();
+  TCPClientClass();
+  ~TCPClientClass();
   uint8_t* recv;
   bool dataRecieved;
   enum{
