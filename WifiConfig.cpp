@@ -6,6 +6,7 @@ WifiConfig::WifiConfig(){
     WifiName = "";
     password = "";
     connected = false;
+     
 }
 
 WifiConfig::~WifiConfig(){
@@ -13,8 +14,7 @@ WifiConfig::~WifiConfig(){
 }
 
 
-void WifiConfig::start_connect()
-{
+void WifiConfig::start_connect(){
     delay(10);
 
     Serial.println();
@@ -25,8 +25,7 @@ void WifiConfig::start_connect()
     WiFi.mode(WIFI_STA);
     WiFi.begin(WifiName,password);
 
-     while(WiFi.status() != WL_CONNECTED)
-        {
+     while(WiFi.status() != WL_CONNECTED){
             delay(500);
             Serial.print(".");
         }
@@ -39,8 +38,7 @@ void WifiConfig::start_connect()
 }
 
 
-void WifiConfig::set_wifi_credentials(const char* ssid, const char* pass)
-{   
+void WifiConfig::set_wifi_credentials(const char* ssid, const char* pass){   
     WifiName = ssid;
     password = pass;
 

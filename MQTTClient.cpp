@@ -13,8 +13,7 @@ MQTTClient::~MQTTClient(){
 } 
 
 
-void MQTTClient::callback (char* topic , byte* payload, unsigned int lenght)
-{
+void MQTTClient::callback (char* topic , byte* payload, unsigned int lenght){
    Serial.print("Message arrived [");
    Serial.print(topic);
    Serial.print("] ");
@@ -27,11 +26,8 @@ void MQTTClient::callback (char* topic , byte* payload, unsigned int lenght)
 }
 
 
-void MQTTClient::connectToMqtt(String value){
-  
-
-  while (!pMqtt_client->connected())
-  {
+void MQTTClient::connectToMqtt(){
+    while (!pMqtt_client->connected()){
      
     String clientID = "MQTTClient - ";
     clientID += String(random(1,100));
@@ -44,9 +40,23 @@ void MQTTClient::connectToMqtt(String value){
       Serial.println("Connected to MQTT Server with " + clientID);
 
 
+    }else{
+          Serial.println("Didn't connect. Try again.");
+        Serial.println(pMqtt_client->state());
+        Serial.println("Try again in 5 sec ");
 
-       if (pMqtt_client->subscribe("SensorTopic"))
-       {
+        delay(5000);
+      }
+
+  }
+}
+
+
+void MQTTClient::sendToBroker(String value)
+{
+  if(pMqtt_client->connected()){
+
+     if (pMqtt_client->subscribe("SensorTopic")){
           Serial.println("Successfully subscribed to topic");
        }
 
@@ -54,23 +64,9 @@ void MQTTClient::connectToMqtt(String value){
           Serial.println ("Message with value " + value + " should be sent. Wait for callback");
       }
 
-      
-
-      
-
-    }
-    else {
-      Serial.println("Didn't connect. Try again.");
-      Serial.println(pMqtt_client->state());
-      Serial.println("Try again in 5 sec ");
-
-      delay(5000);
-
-    }
-  }
+  }    
 
 }
-
 
 void MQTTClient::mqttSetup(){
 }

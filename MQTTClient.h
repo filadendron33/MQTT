@@ -13,7 +13,8 @@ class MQTTClient{
     public:
         MQTTClient(PubSubClient& client, const char* serverIP);
         ~MQTTClient();
-        void connectToMqtt(String value);
+        void connectToMqtt();
+        void sendToBroker(String value);
         static void callback (char* topic , byte* payload, unsigned int lenght);
         void mqttSetup();
         PubSubClient* pMqtt_client;

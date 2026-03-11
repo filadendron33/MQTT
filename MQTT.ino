@@ -34,20 +34,20 @@ void setup() {
   wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
 
   wifi.start_connect();
+  mqtt_client.setServer(mqtt.mqtt_server,1884);
+  mqtt_client.setCallback(mqtt.callback);
+  mqtt.connectToMqtt();
 
  
 
 
 
-  // TCPClient.setup_ethernet();
-  // TCPClient.connectToServer();
+  TCPClient.setup_ethernet();
 
 
-  mqtt_client.setServer(mqtt.mqtt_server,1884);
-  mqtt_client.setCallback(mqtt.callback);
+  
 
-  // mqtt_client.setServer(mqtt_server, 1884);
-  // mqtt_client.setCallback(callback);
+
   
 
  
@@ -55,8 +55,12 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //mojClient.serverLoop();
+  TCPClient.cyclicLogic();
 
-  mqtt.connectToMqtt("123");
+  if (TCPClient.dataRecieved){
+    mqtt.sendToBroker(TCPClient.message);
+    TCPClient.dataRecieved = false;
+  }
+
   
 }
