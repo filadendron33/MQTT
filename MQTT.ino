@@ -8,13 +8,12 @@
 // const char* WifiName = "AndroidAP5C32";
 // const char* password = "12345678";
 // const char* mqtt_server = "10.116.207.225";
-bool emptyMessage;
 
 
 
 WifiConfig wifi;
 PubSubClient mqtt_client(wifi.espClient);
-MQTTClient mqtt(mqtt_client,"10.93.225.225");
+MQTTClient mqtt(mqtt_client,"192.168.1.21");
 TCPClientClass TCPClient;
 
 
@@ -29,14 +28,14 @@ void setup() {
   
   
 
-  // wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
+  wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
 
-  wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
+  // wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
 
   wifi.start_connect();
   mqtt_client.setServer(mqtt.mqtt_server,1884);
   mqtt_client.setCallback(mqtt.callback);
-  mqtt.connectToMqtt();
+  mqtt.mqttSetup();
 
  
 
@@ -55,11 +54,14 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  TCPClient.setMqttState(mqtt.mqttClientState);
   TCPClient.cyclicLogic();
+  mqtt.cyclicLogic();
+
 
   if (TCPClient.dataRecieved){
     mqtt.sendToBroker(TCPClient.message);
-    TCPClient.dataRecieved = false;
   }
 
   

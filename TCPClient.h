@@ -41,6 +41,7 @@ class TCPClientClass {
   void connectToServer();
   void send();
   uint8_t* getRecv();
+  void setMqttState(bool state);
 
   
 

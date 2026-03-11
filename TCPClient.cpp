@@ -23,6 +23,7 @@ TCPClientClass::~TCPClientClass()
 }
 
 
+//Setting ethernet 
 void TCPClientClass::setup_ethernet(){
 Serial.println("Starting Ethernet...");
 
@@ -52,23 +53,26 @@ Serial.println("Starting Ethernet...");
 
 }
 
+//call back on connection
 void TCPClientClass::onConnect(void* arg, AsyncClient* c){
   Serial.println("TCP CONNECTED");
 
 }
 
+//Callback on Disconnect
 void TCPClientClass::onDisconnect(void* arg, AsyncClient* c){
   TCPClientClass* self = static_cast<TCPClientClass*>(arg);
   Serial.println("TCP DISCONNECTED");
   self->state = TCPClientClass::ConnectStart;
 }
 
+//calll back on Error
 void TCPClientClass::onError(void* arg, AsyncClient* c, int8_t error){
   Serial.printf("TCP ERROR: %d\n", error);
 
 }
 
-
+//Call back on data, parse data to message
 void TCPClientClass::onData(void* arg, AsyncClient* c, void* data, size_t len){
     TCPClientClass* self = static_cast<TCPClientClass*>(arg);
     self->message = "";
@@ -95,7 +99,7 @@ void TCPClientClass::onData(void* arg, AsyncClient* c, void* data, size_t len){
 }
 
 
-
+//conecction
 void TCPClientClass::connectToServer()
 {
 
@@ -131,6 +135,7 @@ void TCPClientClass::connectToServer()
 
 }
 
+//Function for sending message to Server
 void TCPClientClass::send()
 {
   
@@ -144,7 +149,7 @@ void TCPClientClass::send()
   }
   else {
     Serial.println("Sending write to Server");
-    String message = "DEW1\r";
+    String message = "DER1\r";
 
     if (client->canSend()){
       client->write(message.c_str(),message.length());
@@ -156,13 +161,19 @@ void TCPClientClass::send()
 }
 
 
-
+//Getter for recv data
 uint8_t* TCPClientClass::getRecv(){
 
   return recv;
 }
 
+void  TCPClientClass::setMqttState(bool state)
+{
+  mqtt_state = state;
+}
 
+
+//Client logic
 void TCPClientClass::cyclicLogic(){
   switch(state){
     case TCPClientClass::ConnectStart:
@@ -196,10 +207,11 @@ void TCPClientClass::cyclicLogic(){
       case TCPClientClass::RecieveData:
         if (sent && !dataRecieved){
           break;
-        }else if (sent && dataRecieved)
-        {
+        }else if (sent && dataRecieved){
+          Serial.println("Data recieved: ");
           state = TCPClientClass::SendToServer;
           sent = false;
+          dataRecieved = false;
           break;
         }
 
@@ -210,3 +222,5 @@ void TCPClientClass::cyclicLogic(){
 
   }
 }
+
+
