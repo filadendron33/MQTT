@@ -10,51 +10,73 @@
 
 
 
+  
+
 class TCPClientClass {
 
 
   
   public:
-  TCPClientClass();
-  ~TCPClientClass();
-  uint8_t* recv;
-  bool dataRecieved;
-  bool mqtt_state;
-  bool error;
-  String message;
-  
-  enum ClientState {
+    TCPClientClass();
+    ~TCPClientClass();
+    uint8_t* recv;
+    bool dataRecieved;
+    bool error;
+    String message;
     
-    ConnectStart,
-    WaitingConnection,
-    SendToServer,
-    RecieveData,
-    Error
 
-  }state;
+    enum ClientState {
+
+      ConnectStart,
+      WaitingConnection,
+      ClientConnected,
+      SendToServer,
+      RecieveData,
+      Error
+
+    }eState;
+
+    struct fromMQTT {
+    
+      String commandRecieved;
+      String valueRecieved;
+      bool recieved;
+
+    }stFromMQTT;
+
+    struct toTCP{
+      String sensorValue;
+      String writingDone;
+      bool send;
+    }stToMQTT;
+
+
+
   
-  
- 
 
 
-  void setup_ethernet();
-  void connectToServer();
-  void send();
-  uint8_t* getRecv();
-  void setMqttState(bool state);
+    bool setup_ethernet();
+    void connectToServer();
+    void send();
+    uint8_t* getRecv();
+    void cyclicLogic();
+    String parsingMessage(String message);
 
-  
 
-  static void onConnect(void* arg, AsyncClient* c);
-  static void onDisconnect(void* arg, AsyncClient* c);
-  static void onError(void* arg, AsyncClient* c, int8_t error);
-  static void onData(void* arg, AsyncClient* c, void* data, size_t len);
 
-  void cyclicLogic();
+
+   static void onConnect(void* arg, AsyncClient* c);
+   static void onDisconnect(void* arg, AsyncClient* c);
+   static void onError(void* arg, AsyncClient* c, int8_t error);
+   static void onData(void* arg, AsyncClient* c, void* data, size_t len);
+
+
+  //Interface 
+
+    
 
   private:
-   bool hasAClient;
-   bool sent;
+    bool hasAClient;
     unsigned long connectStartTime;  
     AsyncClient* client;
     const IPAddress clientIP{192,168,201,2};

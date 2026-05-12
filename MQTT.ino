@@ -5,15 +5,11 @@
 
 
 
-// const char* WifiName = "AndroidAP5C32";
-// const char* password = "12345678";
-// const char* mqtt_server = "10.116.207.225";
-
 
 
 WifiConfig wifi;
 PubSubClient mqtt_client(wifi.espClient);
-MQTTClient mqtt(mqtt_client,"192.168.1.21");
+MQTTClient mqtt(mqtt_client,"192.168.1.3");
 TCPClientClass TCPClient;
 
 
@@ -35,34 +31,43 @@ void setup() {
   wifi.start_connect();
   mqtt_client.setServer(mqtt.mqtt_server,1884);
   mqtt_client.setCallback(mqtt.callback);
-  mqtt.mqttSetup();
 
  
-
-
-
-  TCPClient.setup_ethernet();
-
-
-  
-
-
-  
 
  
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
-  TCPClient.setMqttState(mqtt.mqttClientState);
-  TCPClient.cyclicLogic();
   mqtt.cyclicLogic();
 
-
-  if (TCPClient.dataRecieved){
-    mqtt.sendToBroker(TCPClient.message);
+  if (mqtt.connected){
+    TCPClient.cyclicLogic();
   }
 
+  if (mqtt.stToTCP.send){
+    mqtt.stToTCP.send = false;
+    TCPClient.stFromMQTT.commandRecieved = mqtt.stToTCP.command;
+    TCPClient.stFromMQTT.valueRecieved = mqtt.stToTCP.inputValue;
+    TCPClient.stFromMQTT.recieved = true;
+    TCPClient.send();
+  }
+
+
+  if(TCPClient.stToMQTT.send){
+    TCPClient.stToMQTT.send = false;
+
+    if (TCPClient.stFromMQTT.commandRecieved == "read"){
+        mqtt.stFromTCP.sensorValueRecieved = TCPClient.stToMQTT.sensorValue;
+        mqtt.publish("plc/sensorValue", mqtt.stFromTCP.sensorValueRecieved);
+    }else if (TCPClient.stFromMQTT.commandRecieved == "write") {
+       mqtt.stFromTCP.writingDone = TCPClient.stToMQTT.writingDone;
+       mqtt.publish("plc/writing", mqtt.stFromTCP.writingDone);
+    }
+    
   
+    mqtt.stFromTCP.recieved = true;
+   
+  }
+
 }
