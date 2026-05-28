@@ -1,6 +1,7 @@
 #include "esp32-hal.h"
 #include "TCPClient.h"
 
+TCPClientClass* TCPClientClass::pSelf = nullptr;
 
 TCPClientClass::TCPClientClass(){
   client = nullptr;
@@ -9,6 +10,8 @@ TCPClientClass::TCPClientClass(){
   dataRecieved = false;
   eState = TCPClientClass::ConnectStart;
   connectStartTime = 0;
+  pSelf = this;
+  stToMQTT.connectionState = "DISCONNECTED";
 }
 
 TCPClientClass::~TCPClientClass(){
@@ -57,14 +60,15 @@ bool TCPClientClass::setup_ethernet(){
 //call back on connection
 void TCPClientClass::onConnect(void* arg, AsyncClient* c){
   Serial.println("TCP CONNECTED");
+  pSelf->stToMQTT.connectionState = "CONNECTED";
 
 }
 
 //Callback on Disconnect
 void TCPClientClass::onDisconnect(void* arg, AsyncClient* c){
-  TCPClientClass* self = static_cast<TCPClientClass*>(arg);
   Serial.println("TCP DISCONNECTED");
-  self->eState = ClientState::ConnectStart;
+  pSelf->eState = ClientState::ConnectStart;
+  pSelf->stToMQTT.connectionState = "DISCONNECTED";
 }
 
 //calll back on Error
@@ -75,33 +79,33 @@ void TCPClientClass::onError(void* arg, AsyncClient* c, int8_t error){
 
 //Call back on data, parse data to message
 void TCPClientClass::onData(void* arg, AsyncClient* c, void* data, size_t len){
-    TCPClientClass* self = static_cast<TCPClientClass*>(arg);
-    self->message = "";
-    self->stToMQTT.send = false;
+    
+    pSelf->message = "";
+    pSelf->stToMQTT.send = false;
 
    
 
    if (len > 0){
-    self->recv = (uint8_t*)data;
+    pSelf->recv = (uint8_t*)data;
 
 
     for (size_t i = 0; i < len; i++) {
-      if (self->recv[i] != '\r'){
-          self->message.concat((char)self->recv[i]);
+      if (pSelf->recv[i] != '\r'){
+          pSelf->message.concat((char)pSelf->recv[i]);
       }
      
     }
-     Serial.println(self->message);
-     self->dataRecieved = true;
+     Serial.println(pSelf->message);
+     pSelf->dataRecieved = true;
      
    }
     
-   memset(self->recv,0,len);
+   memset(pSelf->recv,0,len);
 }
 
 
 //Connect to ESP
-void TCPClientClass::connectToServer(){
+bool TCPClientClass::connectToServer(){
 
     Serial.println("Connnecting to Server");
 
@@ -126,10 +130,12 @@ void TCPClientClass::connectToServer(){
       Serial.println("Failed connection to Server");
       delete client;
       client = nullptr;
+      return false;
     }
     else {
       Serial.println("Connect sent to Server");
       hasAClient = true;
+      return true;
     }
 
 }
@@ -139,12 +145,12 @@ void TCPClientClass::send(){
   
   Serial.println("Sending to PLC");
     if (client->canSend()){
-      if(stFromMQTT.commandRecieved == "write"){
-        String command = "M" + stFromMQTT.valueRecieved + 0x0D;
+      if(*stFromMQTT.commandRecieved == "write"){
+        String command = "M" + *stFromMQTT.valueRecieved + 0x0D;
         Serial.println("Command " + command);
         client->write(command.c_str());
         eState = ClientState::RecieveData;
-      }else if (stFromMQTT.commandRecieved == "read"){
+      }else if (*stFromMQTT.commandRecieved == "read"){
           client->write("DMW\r");    
           eState = ClientState::RecieveData;
       }
@@ -197,8 +203,8 @@ void TCPClientClass::cyclicLogic(){
 
         if(!setup_ethernet()){
           break;
-        }else{
-          connectToServer();
+        }else if (connectToServer()){
+          
           eState = ClientState::WaitingConnection;
         }
 
@@ -229,14 +235,14 @@ void TCPClientClass::cyclicLogic(){
           stToMQTT.send = true;
           dataRecieved = false;
 
-          if (stFromMQTT.commandRecieved == "write")
+          if (*stFromMQTT.commandRecieved == "write")
           {
             
             stToMQTT.writingDone = parsingMessage(message);
 
             eState = ClientState::ClientConnected;
 
-          }else if (stFromMQTT.commandRecieved == "read"){
+          }else if (*stFromMQTT.commandRecieved == "read"){
             Serial.println("Sending message to MQTT to publsih.");
             // stToMQTT.sensorValue = message;
             stToMQTT.sensorValue = parsingMessage(message);

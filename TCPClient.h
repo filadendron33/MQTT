@@ -38,8 +38,8 @@ class TCPClientClass {
 
     struct fromMQTT {
     
-      String commandRecieved;
-      String valueRecieved;
+      String* commandRecieved;
+      String* valueRecieved;
       bool recieved;
 
     }stFromMQTT;
@@ -47,6 +47,7 @@ class TCPClientClass {
     struct toTCP{
       String sensorValue;
       String writingDone;
+      String connectionState;
       bool send;
     }stToMQTT;
 
@@ -56,7 +57,7 @@ class TCPClientClass {
 
 
     bool setup_ethernet();
-    void connectToServer();
+    bool connectToServer();
     void send();
     uint8_t* getRecv();
     void cyclicLogic();
@@ -83,6 +84,7 @@ class TCPClientClass {
     const IPAddress subnet{255,255,255,0};
     const IPAddress serverIP{192,168,201,1};
     uint16_t port = 5000;
+    static TCPClientClass* pSelf;
 
 
 };

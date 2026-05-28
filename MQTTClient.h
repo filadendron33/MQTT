@@ -22,8 +22,9 @@
     };
 
     struct fromTCP{
-        String sensorValueRecieved;
-        String writingDone;
+        String* sensorValueRecieved;
+        String* writingDone;
+        String* connectionStateRecieved;
         bool recieved;
     };
 
@@ -38,7 +39,7 @@ class MQTTClient{
     //Constructor and Destructor
      MQTTClient(PubSubClient& client, const char* serverIP);
      ~MQTTClient();
-     static MQTTState eMqttState;
+     MQTTState eMqttState;
      toTCP stToTCP;
      fromTCP stFromTCP;
      //Functions
@@ -50,13 +51,15 @@ class MQTTClient{
      void mqttSetup();
      void cyclicLogic();
 
+     static MQTTClient* pSelf;
+
      //MQTT client stuff
      PubSubClient* pMqtt_client;
      const char* mqtt_server;
    
      //MQTT callback 
-     static String currentMessage;
-     static String currentTopic;
+     String currentMessage;
+     String currentTopic;
 
      bool connected;
      
@@ -64,6 +67,8 @@ class MQTTClient{
         bool subscribed;
         const char* cmdTopic;
         const char* dataTopic;
+        String connectionStatus;
+        bool messageArrived;
         
 
 };

@@ -2,9 +2,10 @@
   #include <Arduino.h>
   #include "MQTTClient.h"
 
-  String MQTTClient::currentMessage = "";
-  String MQTTClient::currentTopic = "";
-  MQTTState MQTTClient::eMqttState;
+  // String MQTTClient::currentMessage = "";
+  // String MQTTClient::currentTopic = "";
+  // MQTTState MQTTClient::eMqttState;
+  MQTTClient* MQTTClient::pSelf = nullptr;
 
 
   MQTTClient::MQTTClient(PubSubClient& client, const char* serverIP) : mqtt_server(serverIP){
@@ -13,6 +14,9 @@
     dataTopic = "";
     eMqttState = MQTTState::NotConnected;
     subscribed = false;
+    messageArrived = false;
+    connectionStatus = "DISCONNECTED";
+    pSelf = this;
   }
 
   MQTTClient::~MQTTClient(){
@@ -24,17 +28,16 @@
     Serial.print("Message arrived [");
     Serial.print(topic);
     Serial.print("] ");
-      currentTopic = String(topic);
+      pSelf->currentTopic = String(topic);
 
-      currentMessage = "";
+      pSelf->currentMessage = "";
       for (int i = 0; i < lenght; i++ ){
-        currentMessage += (char)payload[i];
+        pSelf->currentMessage += (char)payload[i];
       }
 
-      Serial.println(currentMessage);
-      
+      Serial.println(pSelf->currentMessage);
+      pSelf->messageArrived = true;
       Serial.println();
-      MQTTClient::eMqttState = MQTTState::Parsing;
   }
 
 
@@ -45,9 +48,11 @@
         stToTCP.command = message;
         stToTCP.send = true;
     }else if (topic == dataTopic){
+        stToTCP.inputValue = "";
         stToTCP.inputValue = message;
     }
     eMqttState = MQTTState::Connected;
+    messageArrived = false;
 
 
   }
@@ -60,7 +65,7 @@
       Serial.println("Trying to connect to MQTT Server with " + clientID);
 
 
-      if (pMqtt_client->connect(clientID.c_str())) {
+      if (pMqtt_client->connect(clientID.c_str(),"plc/status/MQTTConnection", 1, true, "DISCONNECTED")) {
 
         Serial.println("Connected to MQTT Server with " + clientID);
         return true;
@@ -80,7 +85,7 @@
       if(pMqtt_client->connected()){
           
           if(pMqtt_client->publish(topic.c_str(), message.c_str())){
-            Serial.println("Message with value " + message + " " + topic + " should be sent. Wait for callback");
+            // Serial.println("Message with value " + message + " " + topic + " should be sent. Wait for callback");
             eMqttState = MQTTState::Connected;
           }
             
@@ -129,6 +134,8 @@
       case MQTTState::Connect:
           if (connectToMqtt()) {
             eMqttState = MQTTState::Connected;
+            connectionStatus = "CONNECTED";
+            
             connected = true;
           }else{
             eMqttState = MQTTState::NotConnected;
@@ -140,12 +147,18 @@
             eMqttState = MQTTState::Subscribe;
           }else{
             pMqtt_client->loop();
+            publish("plc/status/TCPConnection", *stFromTCP.connectionStateRecieved);
+            publish("plc/status/MQTTConnection", connectionStatus);
+            if (messageArrived){
+              eMqttState = MQTTState::Parsing;
+            }
+
+            if(!pMqtt_client->connected()){
+              Serial.println("MQTT Lost connection.");
+              eMqttState = MQTTState::Connect;
+            }
           }
           
-          if(!pMqtt_client->connected()){
-            Serial.println("MQTT Lost connection.");
-            eMqttState = MQTTState::Connect;
-          }
           break;
       case MQTTState::Subscribe:
           Serial.println("Subscribe State");
@@ -154,6 +167,7 @@
           break;
 
       case MQTTState::Parsing:
+          Serial.println("Parsing state");
           parseMessageArrived(currentMessage, currentTopic);
           break;
    
