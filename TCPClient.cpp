@@ -4,42 +4,42 @@
 TCPClientClass* TCPClientClass::pSelf = nullptr;
 
 TCPClientClass::TCPClientClass(){
-  client = nullptr;
-  hasAClient = false;
-  recv = nullptr;
-  dataRecieved = false;
-  eState = TCPClientClass::ConnectStart;
-  connectStartTime = 0;
+  mServer.pClient = nullptr;
+  mServer.bHasAClient = false;
+  Client.pRecv = nullptr;
+  Client.bDataRecieved = false;
+  State = TCPClientClass::ConnectStart;
+  Client.bconnectStartTime = 0;
   pSelf = this;
-  stToMQTT.connectionState = "DISCONNECTED";
+  SendToMQTT.connectionState = "DISCONNECTED";
 }
 
 TCPClientClass::~TCPClientClass(){
   if(client){
-    delete client;
-    client = nullptr;
+    delete Client.pClient;
+    Client.pClient = nullptr;
   }
 }
 
 
 //Setting ethernet 
-bool TCPClientClass::setup_ethernet(){
+bool TCPClientClass::SetupEthernet(){
   
     Serial.println("Starting Ethernet...");
 
 
-      bool start = ETH.begin();
+      bool bStart = ETH.begin();
 
-      if (!start){
+      if (!bStart){
         Serial.println("ETH.begin() returned false. Need diffrent arguments");
         return false;
       }
 
-      ETH.config(clientIP, subnet);
+      ETH.config(mServer.clientIP, mServer.subnet);
 
-      unsigned long waitTime = millis();
+      unsigned long nWaitTime = millis();
       Serial.println("Waiting for ethernet link");
-      while(!ETH.linkUp() && (millis()-waitTime < 10000)){
+      while(!ETH.linkUp() && (millis()-nWaitTime < 10000)){
         Serial.print(".");
         delay(200);
       }
@@ -60,205 +60,205 @@ bool TCPClientClass::setup_ethernet(){
 //call back on connection
 void TCPClientClass::onConnect(void* arg, AsyncClient* c){
   Serial.println("TCP CONNECTED");
-  pSelf->stToMQTT.connectionState = "CONNECTED";
+  pSelf->SendToMQTT.connectionState = "CONNECTED";
 
 }
 
 //Callback on Disconnect
 void TCPClientClass::onDisconnect(void* arg, AsyncClient* c){
   Serial.println("TCP DISCONNECTED");
-  pSelf->eState = ClientState::ConnectStart;
-  pSelf->stToMQTT.connectionState = "DISCONNECTED";
+  pSelf->State = ClientState::ConnectStart;
+  pSelf->SendToMQTT.connectionState = "DISCONNECTED";
 }
 
 //calll back on Error
-void TCPClientClass::onError(void* arg, AsyncClient* c, int8_t error){
-  Serial.printf("TCP ERROR: %d\n", error);
+void TCPClientClass::onError(void* arg, AsyncClient* c, int8_t bError){
+  Serial.printf("TCP ERROR: %d\n", bError);
 
 }
 
 //Call back on data, parse data to message
 void TCPClientClass::onData(void* arg, AsyncClient* c, void* data, size_t len){
     
-    pSelf->message = "";
-    pSelf->stToMQTT.send = false;
+    pSelf->bMessage = "";
+    pSelf->SendToMQTT.Send = false;
 
    
 
    if (len > 0){
-    pSelf->recv = (uint8_t*)data;
+    pSelf->Client.pRecv = (uint8_t*)data;
 
 
     for (size_t i = 0; i < len; i++) {
-      if (pSelf->recv[i] != '\r'){
-          pSelf->message.concat((char)pSelf->recv[i]);
+      if (pSelf->Client.pRecv[i] != '\r'){
+          pSelf->bMessage.concat((char)pSelf->Client.pRecv[i]);
       }
      
     }
-     Serial.println(pSelf->message);
-     pSelf->dataRecieved = true;
+     Serial.println(pSelf->bMessage);
+     pSelf->Client.bDataRecieved = true;
      
    }
     
-   memset(pSelf->recv,0,len);
+   memset(pSelf->Client.pRecv,0,len);
 }
 
 
 //Connect to ESP
-bool TCPClientClass::connectToServer(){
+bool TCPClientClass::ConnectToServer(){
 
     Serial.println("Connnecting to Server");
 
     
-    if (hasAClient){
-      delete client; 
-      client = nullptr;
-      hasAClient = false;
+    if (Client.bHasAClient){
+      delete Client.pClient; 
+      Client.pClient = nullptr;
+      Client.bHasAClient = false;
     }
-    client = new AsyncClient();
+    Client.pClient = new AsyncClient();
     
 
 
-    client->onConnect(onConnect, nullptr);
-    client->onDisconnect(onDisconnect, this);
-    client->onError(onError, nullptr);
-    client->onData(onData, this);
+    Client.pClient ->onConnect(onConnect, nullptr);
+    Client.pClient ->onDisconnect(onDisconnect, this);
+    Client.pClient ->onError(onError, nullptr);
+    Client.pClient ->onData(onData, this);
 
 
-    if (!client->connect(serverIP,port)){
-      connectStartTime = millis();
+    if (!Client.pClient ->connect(serverIP,port)){
+      mServer.nConnectionStartTime = millis();
       Serial.println("Failed connection to Server");
-      delete client;
-      client = nullptr;
+      delete Client.pClient ;
+      Client.pClient  = nullptr;
       return false;
     }
     else {
       Serial.println("Connect sent to Server");
-      hasAClient = true;
+      Client.bHasAClient = true;
       return true;
     }
 
 }
 
-//Function for sending message to Server
-void TCPClientClass::send(){
+//Function for sending bMessage to Server
+void TCPClientClass::Send(){
   
   Serial.println("Sending to PLC");
-    if (client->canSend()){
-      if(*stFromMQTT.commandRecieved == "write"){
-        String command = "M" + *stFromMQTT.valueRecieved + 0x0D;
-        Serial.println("Command " + command);
-        client->write(command.c_str());
-        eState = ClientState::RecieveData;
-      }else if (*stFromMQTT.commandRecieved == "read"){
-          client->write("DMW\r");    
-          eState = ClientState::RecieveData;
+    if (Client.pClient ->canSend()){
+      if(*RecieveFromMQTT.pCommandRecieved == "write"){
+        String sCommand = "M" + *RecieveFromMQTT.pValueRecieved + 0x0D;
+        Serial.println("Command " + sCommand);
+        Client.pClient ->write(sCommand.c_str());
+        State = ClientState::RecieveData;
+      }else if (*RecieveFromMQTT.pCommandRecieved == "read"){
+          Client.pClient ->write("DMW\r");    
+          State = ClientState::RecieveData;
       }
     }
 
 }
 
 
-String TCPClientClass::parsingMessage(String message){
+String TCPClientClass::ParsingMessage(String bMessage){
   //Writing command MMW=42 + 0x0D + 0x0A + ">" = Ox15
   //Reading command DMW=43 + 0x0D + 0x0A + ">" = 0x15
-  String parsed;
-  if (message.startsWith("M")){
+  String sParsed;
+  if (bMessage.startsWith("M")){
     //Writing
     Serial.println("Parsing write");
-    if(message.endsWith(0x0D + 0x0A + ">" + 0x15)){
-      parsed = "Done";
-      Serial.println("Message recieved " + parsed);
-      return parsed;
+    if(bMessage.endsWith(0x0D + 0x0A + ">" + 0x15)){
+      sParsed = "Done";
+      Serial.println("Message recieved " + sParsed);
+      return sParsed;
     }else {
-      parsed = "Failed";
+      sParsed = "Failed";
     }
   }else{
     //Reading
-    const char* arr = message.c_str();
+    const char* pArr = bMessage.c_str();
     Serial.println("Parsing read");
 
-    for(int i = 0; i < message.length(); i++){
-      if (arr[i-1] == '='){
-        while(arr[i] != 0x0A){
-          parsed.concat(arr[i]);
+    for(int i = 0; i < bMessage.length(); i++){
+      if (pArr[i-1] == '='){
+        while(pArr[i] != 0x0A){
+          sParsed.concat(pArr[i]);
           i++;
         }
       }
     }
 
-    Serial.println("Message recieved " + parsed);
+    Serial.println("Message recieved " + sParsed);
 
-    return parsed;
+    return sParsed;
   }
 }
 
 //Client logic
-void TCPClientClass::cyclicLogic(){
+void TCPClientClass::CyclicLogic(){
 
   
-  switch(eState){
+  switch(State){
 
     case ClientState::ConnectStart:
 
-        if(!setup_ethernet()){
+        if(!SetupEthernet()){
           break;
-        }else if (connectToServer()){
+        }else if (ConnectToServer()){
           
-          eState = ClientState::WaitingConnection;
+          State = ClientState::WaitingConnection;
         }
 
-        if (error == true){
-         eState = ClientState::Error;
+        if (bError == true){
+         State = ClientState::Error;
         }
 
       break;
 
     case ClientState::WaitingConnection:
-        if (client && client->connected())
+        if (Client.pClient  && Client.pClient ->connected())
         {
-          eState = ClientState::ClientConnected;
+          State = ClientState::ClientConnected;
         }
-        else if (error == true){
-        eState = ClientState::Error;
+        else if (bError == true){
+        State = ClientState::Error;
         }
         break;
 
     case ClientState::ClientConnected:
-      if(!client->connected()){
+      if(!Client.pClient ->connected()){
         delay(2000);
-        eState = ClientState::ConnectStart;
+        State = ClientState::ConnectStart;
       }
       
     case ClientState::RecieveData:
-        if (dataRecieved){
-          stToMQTT.send = true;
-          dataRecieved = false;
+        if (Client.bDataRecieved){
+          SendToMQTT.Send = true;
+          Client.bDataRecieved = false;
 
-          if (*stFromMQTT.commandRecieved == "write")
+          if (*RecieveFromMQTT.pCommandRecieved == "write")
           {
             
-            stToMQTT.writingDone = parsingMessage(message);
+            SendToMQTT.writingDone = ParsingMessage(bMessage);
 
-            eState = ClientState::ClientConnected;
+            State = ClientState::ClientConnected;
 
-          }else if (*stFromMQTT.commandRecieved == "read"){
-            Serial.println("Sending message to MQTT to publsih.");
-            // stToMQTT.sensorValue = message;
-            stToMQTT.sensorValue = parsingMessage(message);
+          }else if (*RecieveFromMQTT.pCommandRecieved == "read"){
+            Serial.println("Sending bMessage to MQTT to publsih.");
+            // SendToMQTT.sensorValue = bMessage;
+            SendToMQTT.sensorValue = ParsingMessage(bMessage);
 
-            Serial.println(stToMQTT.sensorValue);
-            eState = ClientState::ClientConnected;
+            Serial.println(SendToMQTT.sensorValue);
+            State = ClientState::ClientConnected;
           }
           
         }
         break;
     
     case ClientState::Error:
-        error = false;
+        bError = false;
         if (!client->connected()){
           Serial.println("Error state : Starting connection again");
-          eState = ClientState::ConnectStart;
+          State = ClientState::ConnectStart;
         }
         break;
 

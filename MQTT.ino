@@ -20,11 +20,11 @@ TCPClientClass TCPClient;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  TCPClient.stFromMQTT.commandRecieved = &mqtt.stToTCP.command;
-  TCPClient.stFromMQTT.valueRecieved = &mqtt.stToTCP.inputValue;
-  mqtt.stFromTCP.sensorValueRecieved = &TCPClient.stToMQTT.sensorValue;
-  mqtt.stFromTCP.writingDone = &TCPClient.stToMQTT.writingDone;
-  mqtt.stFromTCP.connectionStateRecieved = &TCPClient.stToMQTT.connectionState;
+  TCPClient.RecieveFromMQTT.pCommandRecieved = &mqtt.stToTCP.command;
+  TCPClient.RecieveFromMQTT.pValueRecieved = &mqtt.stToTCP.inputValue;
+  mqtt.stFromTCP.sensorValueRecieved = &TCPClient.SendToMQTT.sensorValue;
+  mqtt.stFromTCP.writingDone = &TCPClient.SendToMQTT.writingDone;
+  mqtt.stFromTCP.connectionStateRecieved = &TCPClient.SendToMQTT.connectionState;
   
 
   // wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
@@ -33,7 +33,7 @@ void setup() {
 
   wifi.start_connect();
   mqtt_client.setServer(mqtt.mqtt_server,1884);
-  mqtt_client.setCallback(mqtt.callback);
+  mqtt_client.setCallback(mqtt.Callback);
 
  
 
@@ -42,28 +42,28 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  mqtt.cyclicLogic();
+  mqtt.CyclicLogic();
 
 
   if (mqtt.connected){
-    TCPClient.cyclicLogic();
+    TCPClient.CyclicLogic();
   }
 
-  if (mqtt.stToTCP.send){
-    mqtt.stToTCP.send = false;
-    TCPClient.stFromMQTT.recieved = true;
-    TCPClient.send();
+  if (mqtt.stToTCP.Send){
+    mqtt.stToTCP.Send = false;
+    TCPClient.RecieveFromMQTT.recieved = true;
+    TCPClient.Send();
   }
 
 
-  if(TCPClient.stToMQTT.send){
-    TCPClient.stToMQTT.send = false;
+  if(TCPClient.SendToMQTT.Send){
+    TCPClient.SendToMQTT.Send = false;
 
-    if (*TCPClient.stFromMQTT.commandRecieved == "read"){
-        mqtt.publish("plc/sensorValue", *mqtt.stFromTCP.sensorValueRecieved);
-    }else if (*TCPClient.stFromMQTT.commandRecieved == "write") {
+    if (*TCPClient.RecieveFromMQTT.pCommandRecieved == "read"){
+        mqtt.Publish("plc/sensorValue", *mqtt.stFromTCP.sensorValueRecieved);
+    }else if (*TCPClient.RecieveFromMQTT.pCommandRecieved == "write") {
        
-       mqtt.publish("plc/writing", *mqtt.stFromTCP.writingDone);
+       mqtt.Publish("plc/writing", *mqtt.stFromTCP.writingDone);
     }
     
   
