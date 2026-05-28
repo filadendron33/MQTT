@@ -20,11 +20,11 @@ TCPClientClass TCPClient;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  TCPClient.RecieveFromMQTT.pCommandRecieved = &mqtt.stToTCP.command;
-  TCPClient.RecieveFromMQTT.pValueRecieved = &mqtt.stToTCP.inputValue;
-  mqtt.stFromTCP.sensorValueRecieved = &TCPClient.SendToMQTT.sensorValue;
-  mqtt.stFromTCP.writingDone = &TCPClient.SendToMQTT.writingDone;
-  mqtt.stFromTCP.connectionStateRecieved = &TCPClient.SendToMQTT.connectionState;
+  TCPClient.RecieveFromMQTT.pCommandRecieved = &mqtt.SendToTCP.sCommand;
+  TCPClient.RecieveFromMQTT.pValueRecieved = &mqtt.SendToTCP.sInputValue;
+  mqtt.RecieveFromTCP.pSensorValueRecieved = &TCPClient.SendToMQTT.sSensorValue;
+  mqtt.RecieveFromTCP.pWritingDone = &TCPClient.SendToMQTT.sWritingDone;
+  mqtt.RecieveFromTCP.pConnectionStateRecieved = &TCPClient.SendToMQTT.sConnectionState;
   
 
   // wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
@@ -32,7 +32,7 @@ void setup() {
   wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
 
   wifi.start_connect();
-  mqtt_client.setServer(mqtt.mqtt_server,1884);
+  mqtt_client.setServer(mqtt.Client.pIPAddres,1884);
   mqtt_client.setCallback(mqtt.Callback);
 
  
@@ -49,25 +49,25 @@ void loop() {
     TCPClient.CyclicLogic();
   }
 
-  if (mqtt.stToTCP.Send){
-    mqtt.stToTCP.Send = false;
-    TCPClient.RecieveFromMQTT.recieved = true;
+  if (mqtt.stToTCP.bSend){
+    mqtt.stToTCP.bSend = false;
+    TCPClient.RecieveFromMQTT.bRecieved= true;
     TCPClient.Send();
   }
 
 
-  if(TCPClient.SendToMQTT.Send){
-    TCPClient.SendToMQTT.Send = false;
+  if(TCPClient.SendToMQTT.bSend){
+    TCPClient.SendToMQTT.bSend = false;
 
     if (*TCPClient.RecieveFromMQTT.pCommandRecieved == "read"){
-        mqtt.Publish("plc/sensorValue", *mqtt.stFromTCP.sensorValueRecieved);
+        mqtt.Publish("plc/sensorValue", *mqtt.RecieveFromTCP.pSensorValueRecieved);
     }else if (*TCPClient.RecieveFromMQTT.pCommandRecieved == "write") {
        
-       mqtt.Publish("plc/writing", *mqtt.stFromTCP.writingDone);
+       mqtt.Publish("plc/writing", *mqtt.RecieveFromTCP.pWritingDone);
     }
     
   
-    mqtt.stFromTCP.recieved = true;
+    mqtt.RecieveFromTCP.bRecieved = true;
    
   }
 }
