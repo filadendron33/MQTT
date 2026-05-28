@@ -52,7 +52,7 @@ class TCPClientClass {
       bool bHasAClient;
       bool bDataRecieved;
       bool bError;
-      String bMessage;
+      String sMessage;
 
       };
 
@@ -73,7 +73,7 @@ class TCPClientClass {
     void Send();
     uint8_t* GetRecv();
     void CyclicLogic();
-    String ParsingMessage(String bMessage);
+    String ParsingMessage(String sMessage);
 
    static void onConnect(void* arg, AsyncClient* c);
    static void onDisconnect(void* arg, AsyncClient* c);
@@ -87,7 +87,7 @@ class TCPClientClass {
       const IPAddress subnet{255,255,255,0};
       const IPAddress serverIP{192,168,201,1};
       uint16_t nPort = 5000;
-    }
+    };
     // bool hasAClient;
     // unsigned long connectStartTime;  
     // AsyncClient* client;
@@ -95,7 +95,7 @@ class TCPClientClass {
     // const IPAddress subnet{255,255,255,0};
     // const IPAddress serverIP{192,168,201,1};
     // uint16_t port = 5000;
-    TCPServer mServer;
+    TCPServer Server;
     static TCPClientClass* pSelf;
 };
 

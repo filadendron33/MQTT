@@ -4,18 +4,18 @@
 TCPClientClass* TCPClientClass::pSelf = nullptr;
 
 TCPClientClass::TCPClientClass(){
-  mServer.pClient = nullptr;
-  mServer.bHasAClient = false;
+  Client.pClient = nullptr;
+  Client.bHasAClient = false;
   Client.pRecv = nullptr;
   Client.bDataRecieved = false;
   State = TCPClientClass::ConnectStart;
-  Client.bconnectStartTime = 0;
+  Server.nConnectStartTime = 0;
   pSelf = this;
-  SendToMQTT.connectionState = "DISCONNECTED";
+  SendToMQTT.sConnectionState = "DISCONNECTED";
 }
 
 TCPClientClass::~TCPClientClass(){
-  if(client){
+  if(Client.pClient){
     delete Client.pClient;
     Client.pClient = nullptr;
   }
@@ -35,7 +35,7 @@ bool TCPClientClass::SetupEthernet(){
         return false;
       }
 
-      ETH.config(mServer.clientIP, mServer.subnet);
+      ETH.config(Server.clientIP, Server.subnet);
 
       unsigned long nWaitTime = millis();
       Serial.println("Waiting for ethernet link");
@@ -60,7 +60,7 @@ bool TCPClientClass::SetupEthernet(){
 //call back on connection
 void TCPClientClass::onConnect(void* arg, AsyncClient* c){
   Serial.println("TCP CONNECTED");
-  pSelf->SendToMQTT.connectionState = "CONNECTED";
+  pSelf->SendToMQTT.sConnectionState = "CONNECTED";
 
 }
 
@@ -68,7 +68,7 @@ void TCPClientClass::onConnect(void* arg, AsyncClient* c){
 void TCPClientClass::onDisconnect(void* arg, AsyncClient* c){
   Serial.println("TCP DISCONNECTED");
   pSelf->State = ClientState::ConnectStart;
-  pSelf->SendToMQTT.connectionState = "DISCONNECTED";
+  pSelf->SendToMQTT.sConnectionState = "DISCONNECTED";
 }
 
 //calll back on Error
@@ -80,8 +80,8 @@ void TCPClientClass::onError(void* arg, AsyncClient* c, int8_t bError){
 //Call back on data, parse data to message
 void TCPClientClass::onData(void* arg, AsyncClient* c, void* data, size_t len){
     
-    pSelf->bMessage = "";
-    pSelf->SendToMQTT.Send = false;
+    pSelf->Client.sMessage = "";
+    pSelf->SendToMQTT.bSend = false;
 
    
 
@@ -91,11 +91,11 @@ void TCPClientClass::onData(void* arg, AsyncClient* c, void* data, size_t len){
 
     for (size_t i = 0; i < len; i++) {
       if (pSelf->Client.pRecv[i] != '\r'){
-          pSelf->bMessage.concat((char)pSelf->Client.pRecv[i]);
+          pSelf->Client.sMessage.concat((char)pSelf->Client.pRecv[i]);
       }
      
     }
-     Serial.println(pSelf->bMessage);
+     Serial.println(pSelf->Client.sMessage);
      pSelf->Client.bDataRecieved = true;
      
    }
@@ -125,8 +125,8 @@ bool TCPClientClass::ConnectToServer(){
     Client.pClient ->onData(onData, this);
 
 
-    if (!Client.pClient ->connect(serverIP,port)){
-      mServer.nConnectionStartTime = millis();
+    if (!Client.pClient->connect(Server.serverIP,Server.nPort)){
+      Server.nConnectStartTime = millis();
       Serial.println("Failed connection to Server");
       delete Client.pClient ;
       Client.pClient  = nullptr;
@@ -159,14 +159,14 @@ void TCPClientClass::Send(){
 }
 
 
-String TCPClientClass::ParsingMessage(String bMessage){
+String TCPClientClass::ParsingMessage(String sMessage){
   //Writing command MMW=42 + 0x0D + 0x0A + ">" = Ox15
   //Reading command DMW=43 + 0x0D + 0x0A + ">" = 0x15
   String sParsed;
-  if (bMessage.startsWith("M")){
+  if (sMessage.startsWith("M")){
     //Writing
     Serial.println("Parsing write");
-    if(bMessage.endsWith(0x0D + 0x0A + ">" + 0x15)){
+    if(sMessage.endsWith(0x0D + 0x0A + ">" + 0x15)){
       sParsed = "Done";
       Serial.println("Message recieved " + sParsed);
       return sParsed;
@@ -175,10 +175,10 @@ String TCPClientClass::ParsingMessage(String bMessage){
     }
   }else{
     //Reading
-    const char* pArr = bMessage.c_str();
+    const char* pArr = sMessage.c_str();
     Serial.println("Parsing read");
 
-    for(int i = 0; i < bMessage.length(); i++){
+    for(int i = 0; i < sMessage.length(); i++){
       if (pArr[i-1] == '='){
         while(pArr[i] != 0x0A){
           sParsed.concat(pArr[i]);
@@ -208,46 +208,46 @@ void TCPClientClass::CyclicLogic(){
           State = ClientState::WaitingConnection;
         }
 
-        if (bError == true){
+        if (Client.bError == true){
          State = ClientState::Error;
         }
 
       break;
 
     case ClientState::WaitingConnection:
-        if (Client.pClient  && Client.pClient ->connected())
+        if (Client.pClient && Client.pClient->connected())
         {
           State = ClientState::ClientConnected;
         }
-        else if (bError == true){
+        else if (Client.bError == true){
         State = ClientState::Error;
         }
         break;
 
     case ClientState::ClientConnected:
-      if(!Client.pClient ->connected()){
+      if(!Client.pClient->connected()){
         delay(2000);
         State = ClientState::ConnectStart;
       }
       
     case ClientState::RecieveData:
         if (Client.bDataRecieved){
-          SendToMQTT.Send = true;
+          SendToMQTT.bSend = true;
           Client.bDataRecieved = false;
 
           if (*RecieveFromMQTT.pCommandRecieved == "write")
           {
             
-            SendToMQTT.writingDone = ParsingMessage(bMessage);
+            SendToMQTT.sWritingDone = ParsingMessage(Client.sMessage);
 
             State = ClientState::ClientConnected;
 
           }else if (*RecieveFromMQTT.pCommandRecieved == "read"){
-            Serial.println("Sending bMessage to MQTT to publsih.");
+            Serial.println("Sending Message to MQTT to publsih.");
             // SendToMQTT.sensorValue = bMessage;
-            SendToMQTT.sensorValue = ParsingMessage(bMessage);
+            SendToMQTT.sSensorValue = ParsingMessage(Client.sMessage);
 
-            Serial.println(SendToMQTT.sensorValue);
+            Serial.println(SendToMQTT.sSensorValue);
             State = ClientState::ClientConnected;
           }
           
@@ -255,8 +255,8 @@ void TCPClientClass::CyclicLogic(){
         break;
     
     case ClientState::Error:
-        bError = false;
-        if (!client->connected()){
+        Client.bError = false;
+        if (!Client.pClient->connected()){
           Serial.println("Error state : Starting connection again");
           State = ClientState::ConnectStart;
         }

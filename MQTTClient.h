@@ -41,6 +41,8 @@ class MQTTClient{
             const char* pDataTopic;
             String sConnectionStatus;
             bool bMessageArrived;
+            String sCurrentMessage;
+            String sCurrentTopic;
 
         };
 
@@ -52,14 +54,14 @@ class MQTTClient{
 
         };
 
-        /Constructor and Destructor
+        //Constructor and Destructor
         MQTTClient(PubSubClient& client, const char* serverIP);
         ~MQTTClient();
         //Functions
         bool ConnectToMqtt();
-        void Publish(String topic, String bMessage);
-        bool SubscribeToTopic(const char* topic);
-        void ParseMessageArrived(String bMessage, String topic);
+        void Publish(String sTopic, String bMessage);
+        bool SubscribeToTopic(const char* pTopic);
+        void ParseMessageArrived(String bMessage, String sTopic);
         static void Callback (char* topic , byte* payload, unsigned int lenght);
         void MqttSetup();
         void CyclicLogic();
@@ -72,8 +74,7 @@ class MQTTClient{
         //  const char* mqtt_server;
         MQTTClientData Client;
         //MQTT Callback 
-        String sCurrentMessage;
-        String sCurrentTopic;
+        
         
 
     private:

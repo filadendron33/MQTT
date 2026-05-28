@@ -9,7 +9,7 @@
 
 WifiConfig wifi;
 PubSubClient mqtt_client(wifi.espClient);
-MQTTClient mqtt(mqtt_client,"10.85.49.225");
+MQTTClient mqtt(mqtt_client,"192.168.1.15");
 TCPClientClass TCPClient;
 
 
@@ -27,9 +27,9 @@ void setup() {
   mqtt.RecieveFromTCP.pConnectionStateRecieved = &TCPClient.SendToMQTT.sConnectionState;
   
 
-  // wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
+  wifi.set_wifi_credentials("ZTE_H168N939DEB", "ffakbx5y");
 
-  wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
+  // wifi.set_wifi_credentials("AndroidAP5C32", "12345678");
 
   wifi.start_connect();
   mqtt_client.setServer(mqtt.Client.pIPAddres,1884);
@@ -45,12 +45,12 @@ void loop() {
   mqtt.CyclicLogic();
 
 
-  if (mqtt.connected){
+  if (mqtt.Client.bConnected){
     TCPClient.CyclicLogic();
   }
 
-  if (mqtt.stToTCP.bSend){
-    mqtt.stToTCP.bSend = false;
+  if (mqtt.SendToTCP.bSend){
+    mqtt.SendToTCP.bSend = false;
     TCPClient.RecieveFromMQTT.bRecieved= true;
     TCPClient.Send();
   }

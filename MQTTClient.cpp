@@ -8,7 +8,8 @@
   MQTTClient* MQTTClient::pSelf = nullptr;
 
 
-  MQTTClient::MQTTClient(PubSubClient& client, const char* pServerIP) : Client.pIPAddres(pServerIP){
+  MQTTClient::MQTTClient(PubSubClient& client, const char* pServerIP){
+    Client.pIPAddres = pServerIP;
     Client.pMqtt_client = &client;
     Data.pCmdTopic = "";
     Data.pDataTopic = "";
@@ -30,7 +31,7 @@
     Serial.print("] ");
       pSelf->Data.sCurrentTopic = String(pTopic);
 
-      pSelf->currentMessage = "";
+      pSelf->Data.sCurrentMessage = "";
       for (int i = 0; i < nLenght; i++ ){
         pSelf->Data.sCurrentMessage += (char)pPayload[i];
       }
@@ -44,10 +45,10 @@
   void MQTTClient::ParseMessageArrived(String sMessage, String sTopic){
 
     Serial.println("Sending bMessage and topic to TCP " +  sTopic + " " + sMessage);
-    if(sTopic == cmdTopic){
+    if(sTopic == Data.pCmdTopic){
         SendToTCP.sCommand = sMessage;
         SendToTCP.bSend = true;
-    }else if (sTopic == dataTopic){
+    }else if (sTopic == Data.pDataTopic){
         SendToTCP.sInputValue = "";
         SendToTCP.sInputValue = sMessage;
     }
@@ -65,14 +66,14 @@
       Serial.println("Trying to connect to MQTT Server with " + sClientID);
 
 
-      if (pMqtt_client->connect(sClientID.c_str(),"plc/status/MQTTConnection", 1, true, "DISCONNECTED")) {
+      if (Client.pMqtt_client->connect(sClientID.c_str(),"plc/status/MQTTConnection", 1, true, "DISCONNECTED")) {
 
         Serial.println("Connected to MQTT Server with " + sClientID);
         return true;
 
       }else{
           Serial.println("Didn't connect. Try again.");
-          Serial.println(pMqtt_client->state());
+          Serial.println(Client.pMqtt_client->state());
           Serial.println("Try again in 5 sec ");
           delay(5000);
           return false;
@@ -82,9 +83,9 @@
 
 
   void MQTTClient::Publish(String sTopic, String sMessage){
-      if(pMqtt_client->connected()){
+      if(Client.pMqtt_client->connected()){
           
-          if(pMqtt_client->Publish(sTopic.c_str(), sMessage.c_str())){
+          if(Client.pMqtt_client->publish(sTopic.c_str(), sMessage.c_str())){
             // Serial.println("Message with value " + bMessage + " " + topic + " should be sent. Wait for Callback");
             State = MQTTState::Connected;
           }
@@ -94,7 +95,7 @@
 
   bool MQTTClient::SubscribeToTopic(const char* pTopic){
 
-      if(pMqtt_client->subscribe(pTopic))
+      if(Client.pMqtt_client->subscribe(pTopic))
       {
         Serial.println("Subscribed to topic");
         return true;
@@ -107,9 +108,9 @@
 
 
   void MQTTClient::MqttSetup(){
-    Data.sCmdTopic = "command/cmd";
-    Data.sDataTopic = "data/inputData";
-    if (SubscribeToTopic(Data.sCmdTopic) && SubscribeToTopic(Data.sDataTopic)){
+    Data.pCmdTopic = "command/cmd";
+    Data.pDataTopic = "data/inputData";
+    if (SubscribeToTopic(Data.pCmdTopic) && SubscribeToTopic(Data.pDataTopic)){
       Serial.println("subscribed");
       Data.bSubscribed = true;
     }
@@ -121,10 +122,10 @@
     switch (State){
       
       case MQTTState::NotConnected:
-        if(!pMqtt_client->connected()){
+        if(!Client.pMqtt_client->connected()){
             State = MQTTState::Connect;
             Data.bSubscribed = false;
-            ClientData.bConnected = false;
+            Client.bConnected = false;
         }else{
             State = MQTTState::Connected;
         }
@@ -136,7 +137,7 @@
             State = MQTTState::Connected;
             Data.sConnectionStatus = "CONNECTED";
             
-            ClientData.bConnected = true;
+            Client.bConnected = true;
           }else{
             State = MQTTState::NotConnected;
           }
@@ -146,14 +147,14 @@
           if(!Data.bSubscribed){
             State = MQTTState::Subscribe;
           }else{
-            pMqtt_client->loop();
-            Publish("plc/status/TCPConnection", *stFromTCP.connectionStateRecieved);
+            Client.pMqtt_client->loop();
+            Publish("plc/status/TCPConnection", *RecieveFromTCP.pConnectionStateRecieved);
             Publish("plc/status/MQTTConnection", Data.sConnectionStatus);
-            if (Data.sMessageArrived){
+            if (Data.bMessageArrived){
               State = MQTTState::Parsing;
             }
 
-            if(!pMqtt_client->connected()){
+            if(!Client.pMqtt_client->connected()){
               Serial.println("MQTT Lost connection.");
               State = MQTTState::Connect;
             }
